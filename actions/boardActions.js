@@ -12,7 +12,21 @@ function toggleCell(index) {
     boardStore.toggleCell(index);
 }
 
+function evolve() {
+    boardStore.evolve();
+}
+
+function toggleAnimation(isAnimated) {
+    if (isAnimated) {
+	boardStore.toggleAnimation(false);
+    } else {
+	boardStore.toggleAnimation(true);
+    }
+}
+
 module.exports = {
     fillCells: fillCells,
-    toggleCell: toggleCell
+    toggleCell: toggleCell,
+    evolve: evolve,
+    toggleAnimation: toggleAnimation
 }

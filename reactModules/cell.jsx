@@ -7,7 +7,7 @@ var Cell = React.createClass({
     this.props.toggleCell(e.target.id);
   },
   render: function() {
-    var classes = 'cell ' + (this.props.isDead ? 'dead' : 'alive');
+    var classes = 'cell ' + (this.props.isAlive ? 'alive' : 'dead');
 
     var style = {
       left: this.props.x,

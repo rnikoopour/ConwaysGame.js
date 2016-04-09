@@ -13,7 +13,8 @@ var Board = React.createClass({
       cols:0,
       numCells:0,
       cells: [],
-      Cells: []
+      Cells: [],
+      isAnimated: false
     };
     return state;
   },
@@ -22,7 +23,6 @@ var Board = React.createClass({
     this.syncCells(storeState);
   },
   syncCells: function(state) {
-    console.log(state);
     state.Cells = this.state.Cells;
 
     var xpos = 0;
@@ -39,14 +39,14 @@ var Board = React.createClass({
 
       var cellid = state.Cells.length;
       state.Cells.push(
-	<Cell.Cell x={xpos} y={ypos} id={cellid} key={cellid} toggleCell={boardActions.toggleCell} isDead={true} />
+	<Cell.Cell x={xpos} y={ypos} id={cellid} key={cellid} toggleCell={boardActions.toggleCell} isAlive={false} />
       );
     }
 
     state.Cells.forEach(function(cell, index) {
       if (cell.isDead != state.cells[index]) {
 	state.Cells[index] = React.cloneElement(cell, {
-	  isDead: state.cells[index]
+	  isAlive: state.cells[index]
 	});
       }
     });
@@ -56,10 +56,17 @@ var Board = React.createClass({
   componentDidMount: function() {
     boardActions.fillCells();
   },
+  evolveBoard: function() {
+    boardActions.evolve();
+  },
+  animate: function() {
+    boardActions.toggleAnimation(this.state.isAnimated);
+  },
   render: function() {
     return (
       <div>
-	<button type="button" onClick={this.evolveBoard}>Evolve</button>
+	<button style={{float:'left'}}type="button" onClick={this.evolveBoard}>Evolve</button>
+	<label><input type="checkbox" checked={this.state.isAnimated} onClick={this.animate} />Animate</label>
 	<div>
 	  {this.state.Cells}
 	</div>

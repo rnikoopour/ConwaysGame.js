@@ -13,9 +13,23 @@ function toggleCell(index) {
     boardStore.toggleCell(index);
 }
 
+function evolve() {
+    boardStore.evolve();
+}
+
+function toggleAnimation(isAnimated) {
+    if (isAnimated) {
+	boardStore.toggleAnimation(false);
+    } else {
+	boardStore.toggleAnimation(true);
+    }
+}
+
 module.exports = {
     fillCells: fillCells,
-    toggleCell: toggleCell
+    toggleCell: toggleCell,
+    evolve: evolve,
+    toggleAnimation: toggleAnimation
 }
 
 },{"./../stores/boardStore.js":162,"events":163}],2:[function(require,module,exports){
@@ -18998,7 +19012,8 @@ var Board = React.createClass({displayName: "Board",
       cols:0,
       numCells:0,
       cells: [],
-      Cells: []
+      Cells: [],
+      isAnimated: false
     };
     return state;
   },
@@ -19007,7 +19022,6 @@ var Board = React.createClass({displayName: "Board",
     this.syncCells(storeState);
   },
   syncCells: function(state) {
-    console.log(state);
     state.Cells = this.state.Cells;
 
     var xpos = 0;
@@ -19024,14 +19038,14 @@ var Board = React.createClass({displayName: "Board",
 
       var cellid = state.Cells.length;
       state.Cells.push(
-	React.createElement(Cell.Cell, {x: xpos, y: ypos, id: cellid, key: cellid, toggleCell: boardActions.toggleCell, isDead: true})
+	React.createElement(Cell.Cell, {x: xpos, y: ypos, id: cellid, key: cellid, toggleCell: boardActions.toggleCell, isAlive: false})
       );
     }
 
     state.Cells.forEach(function(cell, index) {
       if (cell.isDead != state.cells[index]) {
 	state.Cells[index] = React.cloneElement(cell, {
-	  isDead: state.cells[index]
+	  isAlive: state.cells[index]
 	});
       }
     });
@@ -19041,10 +19055,17 @@ var Board = React.createClass({displayName: "Board",
   componentDidMount: function() {
     boardActions.fillCells();
   },
+  evolveBoard: function() {
+    boardActions.evolve();
+  },
+  animate: function() {
+    boardActions.toggleAnimation(this.state.isAnimated);
+  },
   render: function() {
     return (
       React.createElement("div", null, 
-	React.createElement("button", {type: "button", onClick: this.evolveBoard}, "Evolve"), 
+	React.createElement("button", {style: {float:'left'}, type: "button", onClick: this.evolveBoard}, "Evolve"), 
+	React.createElement("label", null, React.createElement("input", {type: "checkbox", checked: this.state.isAnimated, onClick: this.animate}), "Animate"), 
 	React.createElement("div", null, 
 	  this.state.Cells
 	)
@@ -19067,7 +19088,7 @@ var Cell = React.createClass({displayName: "Cell",
     this.props.toggleCell(e.target.id);
   },
   render: function() {
-    var classes = 'cell ' + (this.props.isDead ? 'dead' : 'alive');
+    var classes = 'cell ' + (this.props.isAlive ? 'alive' : 'dead');
 
     var style = {
       left: this.props.x,
@@ -19090,16 +19111,17 @@ module.exports = {
 var events = require('events');
 var eventEmitter = new events.EventEmitter();
 
-var rows = 10;
-var cols = 10;
+var rows = 20;
+var cols = 20;
 var numCells = rows * cols;
 var cells = []
+var isAnimated = false;
 
 function fillArray() {
     if ((cells.length) == numCells) return;
     
     while (cells.length < numCells) {
-	cells.push(true);
+	cells.push(false);
     }
     eventEmitter.emit('boardUpdated');
 }
@@ -19118,16 +19140,134 @@ function getState() {
 	rows: rows,
 	cols: cols,
 	numCells: numCells,
-	cells: cells
+	cells: cells,
+	isAnimated: isAnimated
     };
     return state;
+}
+
+function isNorthAlive(index) {
+    return cells[index-rows];
+}
+
+function isNorthEastAlive(index) {
+    return cells[index-rows + 1];
+}
+
+function isEastAlive(index) {
+    return cells[index + 1];
+}
+
+function isSouthEastAlive(index) {
+    return cells[index + rows + 1];
+}
+
+function isSouthAlive(index) {
+    return cells[index + rows];
+}
+
+function isSouthWestAlive(index) {
+    return cells[index + rows - 1];
+}
+
+function isWestAlive(index) {
+    return cells[index - 1];
+}
+
+function isNorthWestAlive(index) {
+    return cells[index - rows - 1];
+}
+
+function countAllNeighbors(index) {
+    var livingNeighbors = 0;
+
+    livingNeighbors += isNorthAlive(index) ? 1 : 0;
+    livingNeighbors += isNorthEastAlive(index) ? 1 : 0;
+    livingNeighbors += isEastAlive(index) ? 1 : 0;
+    livingNeighbors += isSouthEastAlive(index) ? 1 : 0;
+    livingNeighbors += isSouthAlive(index) ? 1 : 0;
+    livingNeighbors += isSouthWestAlive(index) ? 1 : 0;
+    livingNeighbors += isWestAlive(index) ? 1 : 0;
+    livingNeighbors += isNorthWestAlive(index) ? 1 : 0;
+
+    return livingNeighbors;
+}
+
+function countRightColumn(index) {
+    var livingNeighbors = 0;
+
+    livingNeighbors += isNorthAlive(index) ? 1 : 0;
+    livingNeighbors += isSouthAlive(index) ? 1 : 0;
+    livingNeighbors += isSouthWestAlive(index) ? 1 : 0;
+    livingNeighbors += isWestAlive(index) ? 1 : 0;
+    livingNeighbors += isNorthWestAlive(index) ? 1 : 0;
+
+    return livingNeighbors;
+}
+
+function countLeftColumn(index) {
+    var livingNeighbors = 0;
+    
+    livingNeighbors += isNorthAlive(index) ? 1 : 0;
+    livingNeighbors += isNorthEastAlive(index) ? 1 : 0;
+    livingNeighbors += isEastAlive(index) ? 1 : 0;
+    livingNeighbors += isSouthEastAlive(index) ? 1 : 0;
+    livingNeighbors += isSouthAlive(index) ? 1 : 0;
+
+    return livingNeighbors;
+}
+
+function countLivingNeighbors(index) {
+    var livingNeighbors;
+
+    if (index % rows == 0) {
+	livingNeighbors = countLeftColumn(index);
+    } else if (index % rows == rows -1) {
+	livingNeighbors = countRightColumn(index);
+    } else {
+	livingNeighbors = countAllNeighbors(index);
+    }
+
+    return livingNeighbors;
+}
+
+function evolve() {
+    var newCellState = []
+    cells.forEach(function(cellAlive, index) {
+	var livingNeighbors = countLivingNeighbors(index);
+	if (cellAlive && (livingNeighbors < 2 ||
+			  livingNeighbors > 3)) {
+	    newCellState.push(!cellAlive);
+	} else if (!cellAlive && livingNeighbors == 3) {
+	    newCellState.push(!cellAlive);
+	} else {
+	    newCellState.push(cellAlive);
+	}
+    });
+    cells = newCellState;
+    console.log('updated');
+    eventEmitter.emit('boardUpdated');
+}
+
+function toggleEvolution() {
+    console.log(isAnimated);
+    if (!isAnimated) {
+	isAnimated = setInterval(evolve, 200);
+    } else {
+	clearInterval(isAnimated);
+	isAnimated = false;
+    }
+    console.log(isAnimated);
+    eventEmitter.emit('boardUpdated');
 }
 
 module.exports = {
     getState: getState,
     fillArray: fillArray,
     subscribe: subscribe,
-    toggleCell: toggleCell
+    toggleCell: toggleCell,
+    evolve: evolve,
+    toggleAnimation: toggleEvolution
 }
 
 },{"events":163}],163:[function(require,module,exports){
