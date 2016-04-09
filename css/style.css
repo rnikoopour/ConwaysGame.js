@@ -1,0 +1,23 @@
+.cell {
+    height: 20px;
+    width: 20px;
+    border-style: solid;
+    border-color: black;
+    border-width: 1px;
+    float: left;
+    position: absolute;
+}
+
+.alive {
+    background-color: black;
+}
+
+.dead {
+    background-color: white;
+}
+
+.button {
+    position: absolute;
+    left: 500px;
+    top: 500px;
+}
